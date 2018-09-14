@@ -121,7 +121,7 @@ namespace RemoteDebugger
 
         }
 
-        void Callback(string[] response)
+        void Callback(string[] response,int tag)
         {
             try
             {

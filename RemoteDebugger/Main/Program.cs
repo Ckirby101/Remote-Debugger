@@ -30,13 +30,19 @@ using System.Windows.Forms;
 
 namespace RemoteDebugger
 {
+
+
     static class Program
     {
-        static readonly int BreakpointCount=10;
+
 
         public static TelNetSpec telnetConnection=new TelNetSpec();
         public static bool InStepMode = false;
-        public static BindingList<BreakpointData> breakpointData;
+	    public static MainForm myMainForm;
+		
+	    
+	    /*
+	    public static BindingList<BreakpointData> breakpointData;
         static Regex pcBreakRegex;
 
         static void InitialiseBreakpointData()
@@ -48,6 +54,21 @@ namespace RemoteDebugger
                 breakpointData.Add(new BreakpointData() { IsEnabled=false, Condition = "" });
             }
         }
+
+
+	    public static void ResetBreakpoints()
+	    {
+
+		    for (int a = 0; a < BreakpointCount; a++)
+		    {
+			    breakpointData[a].IsEnabled = false;
+			    telnetConnection.SendCommand("set-breakpoint " + (a + 1), null);
+			    telnetConnection.SendCommand("disable-breakpoint " + (a + 1),null);
+		    }
+
+
+	    }
+
 
         public static int FindEmptyBreakpoint()
         {
@@ -97,30 +118,39 @@ namespace RemoteDebugger
             }
         }
 
-        public static void AddBreakpoint(int address)
+        public static bool AddBreakpoint(int address)
         {
             int bp = FindEmptyBreakpoint();
             if (bp!=-1)
             {
-                telnetConnection.SendCommand("set-breakpoint " + (bp + 1) + " PC=" + address, null);
+                telnetConnection.SendCommand("set-breakpoint " + (bp + 1) + " PC=" + address.ToString("X4")+"H", null);
+	            return true;
             }
+
+	        return false;
         }
 
         public static bool IsBreakpoint(int address)
         {
             return FindBreakpoint(address) != -1;
         }
+
+	*/
+
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
         {
-            InitialiseBreakpointData();
+			Breakpoint.InitBreakpointData();
             telnetConnection.UpdateSettings(Properties.Settings.Default.remoteAddress, Properties.Settings.Default.remotePort);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+
+	        myMainForm = new MainForm();
+            Application.Run( myMainForm );
         }
     }
 }

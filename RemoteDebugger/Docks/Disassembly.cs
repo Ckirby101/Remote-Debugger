@@ -26,46 +26,76 @@ SOFTWARE.
 
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace RemoteDebugger
 {
-    public partial class Disassembly : WeifenLuo.WinFormsUI.Docking.DockContent
+    /// -------------------------------------------------------------------------------------------------
+    /// <summary> A disassembly. </summary>
+    ///
+    /// <remarks> 12/09/2018. </remarks>
+    /// -------------------------------------------------------------------------------------------------
+    public partial class Disassembly : Form
     {
+        /// <summary> Information describing the disassembly. </summary>
         BindingList<DisassemblyData> disassemblyData;
+        /// <summary> The dis RegEx. </summary>
         Regex disRegex;
+	    /// <summary> The address RegEx. </summary>
+	    Regex addrRegex;
+        /// <summary> Name of the view. </summary>
         string viewName;
 
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary> Constructor. </summary>
+        ///
+        /// <remarks> 12/09/2018. </remarks>
+        ///
+        /// <param name="name">	    The name. </param>
+        /// <param name="viewname"> The viewname. </param>
+        /// -------------------------------------------------------------------------------------------------
         public Disassembly(string name, string viewname)
         {
             viewName = viewname;
             InitializeComponent();
             disassemblyData = new BindingList<DisassemblyData>();
-            disRegex = new Regex(@"([0-9a-fA-F]{4})\s*(.*)");
-            for (int a=0;a<50;a++)
+            disRegex = new Regex(@"([0-9a-fA-F]{4})\s([0-9a-fA-F]*)\s*(.*)");   //gets the address and opcode hex
+	        addrRegex = new Regex(@"([0-9a-fA-F]{4})");
+            for (int a=0;a<30;a++)
             {
                 disassemblyData.Add(new DisassemblyData() { Address = "0000", Value = "" });
             }
 
-            dataGridView1.DataSource = disassemblyData;
+            DissasemblyDataGrid.DataSource = disassemblyData;
 
-            dataGridView1.Columns[0].ReadOnly = true;
-            dataGridView1.Columns[1].ReadOnly = true;
-            dataGridView1.AllowUserToAddRows = false;
-            dataGridView1.RowHeadersVisible = false;
+            DissasemblyDataGrid.Columns[0].ReadOnly = true;
+            DissasemblyDataGrid.Columns[1].ReadOnly = true;
+            DissasemblyDataGrid.AllowUserToAddRows = false;
+            DissasemblyDataGrid.RowHeadersVisible = false;
         }
-        override protected string GetPersistString()
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary> Request update. </summary>
+        ///
+        /// <remarks> 12/09/2018. </remarks>
+        ///
+        /// <param name="address"> The address. </param>
+        /// -------------------------------------------------------------------------------------------------
+        public void RequestUpdate(int address)
         {
-            return viewName;
+            Program.telnetConnection.SendCommand("d "+address.ToString()+" 30", Callback);
         }
 
-        public void RequestUpdate(string address)
-        {
-            Program.telnetConnection.SendCommand("d "+address+" 50", Callback);
-        }
-
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary> Updates the given items. </summary>
+        ///
+        /// <remarks> 12/09/2018. </remarks>
+        ///
+        /// <param name="items"> The items. </param>
+        /// -------------------------------------------------------------------------------------------------
         void UIUpdate(string[] items)
         {
             bool updated = false;
@@ -74,8 +104,56 @@ namespace RemoteDebugger
                 Match m = disRegex.Match(items[a]);
                 if (m.Success)
                 {
-                    disassemblyData[a].Address = m.Groups[1].Value;
-                    disassemblyData[a].Value = m.Groups[2].Value;
+					//group 3 is disassebly
+	                int addr = 0;
+	                Labels.Label l = null;
+	                if (int.TryParse(m.Groups[1].Value, NumberStyles.AllowHexSpecifier, null, out addr))
+	                {
+		                l = Labels.GetLabel(addr);
+	                }
+
+	                if (l != null)
+	                {
+		                disassemblyData[a].Address = m.Groups[1].Value + " "+m.Groups[2].Value+" "+l.label+":";
+	                }
+	                else
+	                {
+		                disassemblyData[a].Address = m.Groups[1].Value + " "+m.Groups[2].Value;
+	                }
+
+
+
+	                string dis = m.Groups[3].Value;
+	                m = addrRegex.Match(dis);
+
+	                if (m.Success)
+	                {
+		                if (int.TryParse(m.Value, NumberStyles.AllowHexSpecifier, null, out addr))
+		                {
+			                l = null;
+			                int offset;
+			                if (Labels.GetLabelWithOffset(addr,out l, out offset))
+			                {
+								if (Program.InStepMode)
+					                MainForm.myWatches.AddLocalWatch(l);
+
+
+				                if (offset == 0)
+				                {
+					                dis = dis.Replace(m.Value, l.label) + "  ;"+m.Value;
+				                }
+								else
+								{
+									dis = dis.Replace(m.Value, l.label+"+"+offset)+ "  ;"+m.Value;
+								}
+			                }
+
+		                }
+
+
+	                }
+	                disassemblyData[a].Value = dis;
+
                     updated = true;
                 }
             }
@@ -83,21 +161,29 @@ namespace RemoteDebugger
             {
                 for (int a=0;a<disassemblyData.Count();a++)
                 {
-                    if (Program.IsBreakpoint(Convert.ToInt32(disassemblyData[a].Address, 16)))
-                    {
-                        dataGridView1.Rows[a].DefaultCellStyle.BackColor = System.Drawing.Color.Red;
-                    }
-                    else
-                    { 
-                        dataGridView1.Rows[a].DefaultCellStyle.BackColor = System.Drawing.Color.White;
-                    }
+                    //if (Program.IsBreakpoint(Convert.ToInt32(disassemblyData[a].Address, 16)))
+                    //{
+                    //    DissasemblyDataGrid.Rows[a].DefaultCellStyle.BackColor = System.Drawing.Color.Red;
+                    //}
+                    //else
+                    //{ 
+                        DissasemblyDataGrid.Rows[a].DefaultCellStyle.BackColor = System.Drawing.Color.White;
+                    //}
                 }
-                dataGridView1.Invalidate(true);
+                DissasemblyDataGrid.Invalidate(true);
             }
 
         }
 
-        void Callback(string[] response)
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary> Callbacks. </summary>
+        ///
+        /// <remarks> 12/09/2018. </remarks>
+        ///
+        /// <param name="response"> The response. </param>
+        /// <param name="tag">	    The tag. </param>
+        /// -------------------------------------------------------------------------------------------------
+        void Callback(string[] response,int tag)
         {
             try
             {
@@ -116,9 +202,30 @@ namespace RemoteDebugger
             }
         }
 
+	    /// -------------------------------------------------------------------------------------------------
+	    /// <summary> Gets current line code. </summary>
+	    ///
+	    /// <remarks> 12/09/2018. </remarks>
+	    ///
+	    /// <returns> The current line code. </returns>
+	    /// -------------------------------------------------------------------------------------------------
+	    public string GetCurrentLineCode()
+	    {
+		    return disassemblyData[0].Value;
+
+	    }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary> Event handler. Called by dataGridView1 for cell double click events. </summary>
+        ///
+        /// <remarks> 12/09/2018. </remarks>
+        ///
+        /// <param name="sender"> Source of the event. </param>
+        /// <param name="e">	  Data grid view cell event information. </param>
+        /// -------------------------------------------------------------------------------------------------
         private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            int address = Convert.ToInt32(disassemblyData[e.RowIndex].Address, 16);
+/*            int address = Convert.ToInt32(disassemblyData[e.RowIndex].Address, 16);
             if (Program.IsBreakpoint(address))
             {
                 Program.RemoveBreakpoint(address);
@@ -126,12 +233,29 @@ namespace RemoteDebugger
             else
             {
                 Program.AddBreakpoint(address);
-            }
+            }*/
         }
     }
+
+    /// -------------------------------------------------------------------------------------------------
+    /// <summary> A disassembly data. </summary>
+    ///
+    /// <remarks> 12/09/2018. </remarks>
+    /// -------------------------------------------------------------------------------------------------
     class DisassemblyData
     {
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary> Gets or sets the address. </summary>
+        ///
+        /// <value> The address. </value>
+        /// -------------------------------------------------------------------------------------------------
         public string Address { get; set; }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary> Gets or sets the value. </summary>
+        ///
+        /// <value> The value. </value>
+        /// -------------------------------------------------------------------------------------------------
         public string Value { get; set; }
     }
 }

@@ -30,13 +30,16 @@ using System.Threading;
 
 namespace RemoteDebugger
 {
-    public delegate void CommandResponse(string[] response);
+    public delegate void CommandResponse(string[] response,int tag);
     public class Command
     {
-        public Command(string c, CommandResponse cb) { command = c; responseCB = cb; response = new ConcurrentQueue<string>(); }
+        public Command(string c, CommandResponse cb,int _tag=0) { command = c; responseCB = cb; response = new ConcurrentQueue<string>();
+	        tag = _tag;
+        }
         public ConcurrentQueue<string> response;
         public string command;
         public CommandResponse responseCB;
+	    public int tag=0;
     }
     public class TelNetSpec
     {
@@ -45,6 +48,7 @@ namespace RemoteDebugger
         TcpClient c;
         NetworkStream s;
         public bool connected;
+	    public bool JustConnected;
         public bool remoteIsPaused;
         string host;
         int port;
@@ -64,6 +68,7 @@ namespace RemoteDebugger
             port = 0;
             host = "";
             connected = false;
+	        JustConnected = false;
             messages = new ConcurrentQueue<string>();
             commands = new ConcurrentQueue<Command>();
 
@@ -99,9 +104,9 @@ namespace RemoteDebugger
             }
         }
 
-        public void SendCommand(string command,CommandResponse cb)
+	    public void SendCommand(string command, CommandResponse cb, int tag = 0)
         {
-            Command t = new Command(command, cb);
+            Command t = new Command(command, cb, tag);
             commands.Enqueue(t);
         }
 
@@ -127,6 +132,8 @@ namespace RemoteDebugger
 
                             s = c.GetStream();
                             connected = true;
+	                        JustConnected = true;
+
                         }
                     }
                     catch
@@ -223,7 +230,7 @@ namespace RemoteDebugger
                             }
                             else
                             {
-                                cCom.responseCB(cCom.response.ToArray());
+                                cCom.responseCB(cCom.response.ToArray(),cCom.tag);
                                 cCom = null;
                             }
                             // Ready for next command?

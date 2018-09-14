@@ -46,7 +46,7 @@ namespace RemoteDebugger
             return viewName;
         }
 
-        void commandResponse(string[] s)
+        void commandResponse(string[] s,int tag)
         {
 
         }

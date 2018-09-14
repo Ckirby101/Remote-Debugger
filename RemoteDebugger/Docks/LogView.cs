@@ -36,7 +36,7 @@ using System.Windows.Forms;
 
 namespace RemoteDebugger
 {
-    public partial class LogView : WeifenLuo.WinFormsUI.Docking.DockContent
+    public partial class LogView : Form
     {
         static int luid = 0;
         public string viewName;
@@ -50,13 +50,9 @@ namespace RemoteDebugger
 
         private void LogView_FormClosing(object sender, FormClosingEventArgs e)
         {
-            MainForm.myLogs.Remove(this);
+            //MainForm.myLogs.Remove(this);
         }
 
-        override protected string GetPersistString()
-        {
-            return viewName;
-        }
 
         private void timer1_Tick(object sender, EventArgs e)
         {

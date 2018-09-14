@@ -84,12 +84,12 @@ namespace RemoteDebugger
             fileName.Text = FileRequester(path, "bin files (*.bin)|*.bin|All files (*.*)|*.*");
         }
 
-        void NoResponse(string[] response)
+        void NoResponse(string[] response,int tag)
         {
 
         }
 
-        void LoadResponse(string[] data)
+        void LoadResponse(string[] data,int tag)
         {
             if (InvokeRequired)
             {
