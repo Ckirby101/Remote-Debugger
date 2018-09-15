@@ -142,15 +142,27 @@ namespace RemoteDebugger
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
+
+	        if (args.Length == 1)
+	        {
+		        MainForm.TraceDataPath = args[0];
+	        }
+
 			Breakpoint.InitBreakpointData();
             telnetConnection.UpdateSettings(Properties.Settings.Default.remoteAddress, Properties.Settings.Default.remotePort);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
 	        myMainForm = new MainForm();
+
+
+
             Application.Run( myMainForm );
+
+
+
         }
     }
 }

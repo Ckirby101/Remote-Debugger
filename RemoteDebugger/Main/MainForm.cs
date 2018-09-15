@@ -63,6 +63,8 @@ namespace RemoteDebugger
 
         bool refreshScreen;
 
+	    public static string TraceDataPath = "";
+
 		private bool UpdatePcFocus = false;
         public MainForm()
         {
@@ -153,6 +155,24 @@ namespace RemoteDebugger
 			*/
             Program.telnetConnection.SendCommand("help", null);
             refreshScreen = false;
+
+
+	        if (!string.IsNullOrEmpty(TraceDataPath))
+	        {
+		        if (System.IO.File.Exists(TraceDataPath))
+		        {
+
+			        TraceFile.ParseTraceData(TraceDataPath);
+			        if (mySourceWindow!=null)
+			        {
+				        mySourceWindow.InitSourceWindow(Path.GetDirectoryName(TraceDataPath));
+			        }
+
+
+
+		        }
+
+	        }
 
             Invalidate();
         }
@@ -558,6 +578,7 @@ namespace RemoteDebugger
 			openFileDialog1.CheckFileExists = true;
 			if(openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)  
 			{  
+				TraceDataPath = openFileDialog1.FileName;
 				TraceFile.ParseTraceData(openFileDialog1.FileName);
 				if (mySourceWindow!=null)
 				{
