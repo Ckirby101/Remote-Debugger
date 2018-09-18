@@ -30,6 +30,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using RemoteDebugger.Main;
 
 namespace RemoteDebugger
 {
@@ -84,9 +85,22 @@ namespace RemoteDebugger
         ///
         /// <param name="address"> The address. </param>
         /// -------------------------------------------------------------------------------------------------
-        public void RequestUpdate(int address)
+        public void RequestUpdate(int pc)
         {
-            Program.telnetConnection.SendCommand("d "+address.ToString()+" 30", Callback);
+
+	        int addr = TraceFile.GetCloestValidCodeAddress(pc - 10);
+
+			if (addr<0)
+	        {
+		        Program.telnetConnection.SendCommand("d "+pc.ToString()+" 30", Callback,pc);
+	        }
+	        else
+	        {
+		        
+		        Program.telnetConnection.SendCommand("d "+addr.ToString()+" 30", Callback,pc);
+	        }
+
+
         }
 
         /// -------------------------------------------------------------------------------------------------
@@ -96,21 +110,28 @@ namespace RemoteDebugger
         ///
         /// <param name="items"> The items. </param>
         /// -------------------------------------------------------------------------------------------------
-        void UIUpdate(string[] items)
+        void UIUpdate(string[] items,int pc)
         {
-            bool updated = false;
+            //bool updated = false;
             for (int a=0;a<items.Count() && a<disassemblyData.Count();a++)
             {
                 Match m = disRegex.Match(items[a]);
                 if (m.Success)
                 {
-					//group 3 is disassebly
+	                DissasemblyDataGrid.Rows[a].DefaultCellStyle.BackColor = System.Drawing.Color.White;
+
+	                //group 3 is disassebly
 	                int addr = 0;
 	                Labels.Label l = null;
 	                if (int.TryParse(m.Groups[1].Value, NumberStyles.AllowHexSpecifier, null, out addr))
 	                {
 		                l = Labels.GetLabel(addr);
 	                }
+
+					if (addr == pc)
+						DissasemblyDataGrid.Rows[a].DefaultCellStyle.BackColor = System.Drawing.Color.LightBlue;
+
+
 
 	                if (l != null)
 	                {
@@ -154,24 +175,22 @@ namespace RemoteDebugger
 	                }
 	                disassemblyData[a].Value = dis;
 
-                    updated = true;
+                    //updated = true;
                 }
             }
-            if (updated)
-            {
-                for (int a=0;a<disassemblyData.Count();a++)
-                {
-                    //if (Program.IsBreakpoint(Convert.ToInt32(disassemblyData[a].Address, 16)))
-                    //{
-                    //    DissasemblyDataGrid.Rows[a].DefaultCellStyle.BackColor = System.Drawing.Color.Red;
-                    //}
-                    //else
-                    //{ 
-                        DissasemblyDataGrid.Rows[a].DefaultCellStyle.BackColor = System.Drawing.Color.White;
-                    //}
-                }
-                DissasemblyDataGrid.Invalidate(true);
-            }
+
+
+
+			//after disasm then update watch
+	        if (Program.InStepMode)
+	        {
+		        if (MainForm.myMemoryWatch != null)
+		        {
+			        MainForm.myMemoryWatch.UpdateMemory();
+		        }
+
+	        }
+
 
         }
 
@@ -183,17 +202,17 @@ namespace RemoteDebugger
         /// <param name="response"> The response. </param>
         /// <param name="tag">	    The tag. </param>
         /// -------------------------------------------------------------------------------------------------
-        void Callback(string[] response,int tag)
+        void Callback(string[] response,int pc)
         {
             try
             {
                 if (InvokeRequired)
                 {
-                    Invoke((MethodInvoker)delegate { UIUpdate(response); });
+                    Invoke((MethodInvoker)delegate { UIUpdate(response,pc); });
                 }
                 else
                 {
-                    UIUpdate(response);
+                    UIUpdate(response,pc);
                 }
             }
             catch

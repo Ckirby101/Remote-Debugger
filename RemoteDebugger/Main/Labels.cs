@@ -85,6 +85,41 @@ namespace RemoteDebugger
 		}
 
 		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Gets label close. </summary>
+		///
+		/// <remarks> 18/09/2018. </remarks>
+		///
+		/// <param name="addr"> The address. </param>
+		///
+		/// <returns> The label close. </returns>
+		/// -------------------------------------------------------------------------------------------------
+		public static Label GetLabelClose(int addr)
+		{
+			Label best = null;
+			int bestdist = Int32.MaxValue;
+
+			foreach (Label l in labels)
+			{
+				if (addr == l.address)
+				{
+					//cannot get any closer
+					return l;
+				}
+
+				int diff = Math.Abs(addr - l.address);
+				if (bestdist > diff)
+				{
+					bestdist = diff;
+					best = l;
+				}
+
+
+			}
+
+			return best;
+		}
+
+		/// -------------------------------------------------------------------------------------------------
 		/// <summary> Gets label with offset. </summary>
 		///
 		/// <remarks> 08/09/2018. </remarks>
@@ -128,7 +163,17 @@ namespace RemoteDebugger
 			return true;
 		}
 
-
+		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Gets function with offset. </summary>
+		///
+		/// <remarks> 18/09/2018. </remarks>
+		///
+		/// <param name="addr">   The address. </param>
+		/// <param name="lab">    [out] The lab. </param>
+		/// <param name="offset"> [out] The offset. </param>
+		///
+		/// <returns> True if it succeeds, false if it fails. </returns>
+		/// -------------------------------------------------------------------------------------------------
 		public static bool GetFunctionWithOffset(int addr,out Label lab,out int offset)
 		{
 			lab = null;
@@ -162,7 +207,17 @@ namespace RemoteDebugger
 			return true;
 		}
 
-
+		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Gets function with offset banked. </summary>
+		///
+		/// <remarks> 18/09/2018. </remarks>
+		///
+		/// <param name="addr">   The address. </param>
+		/// <param name="lab">    [out] The lab. </param>
+		/// <param name="offset"> [out] The offset. </param>
+		///
+		/// <returns> True if it succeeds, false if it fails. </returns>
+		/// -------------------------------------------------------------------------------------------------
 		public static bool GetFunctionWithOffsetBanked(int addr,out Label lab,out int offset)
 		{
 			lab = null;
@@ -200,10 +255,15 @@ namespace RemoteDebugger
 			return true;
 		}
 
-
-
-
-
+		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Searches for the first label. </summary>
+		///
+		/// <remarks> 18/09/2018. </remarks>
+		///
+		/// <param name="lab"> [out] The lab. </param>
+		///
+		/// <returns> The found label. </returns>
+		/// -------------------------------------------------------------------------------------------------
 		public static Label FindLabel(string lab)
 		{
 			lab = lab.ToLower();

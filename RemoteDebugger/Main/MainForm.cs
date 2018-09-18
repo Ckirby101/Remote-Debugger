@@ -450,10 +450,6 @@ namespace RemoteDebugger
 		    //}
 		    if (UpdatePcFocus)
 		    {
-			    if (myMemoryWatch != null)
-			    {
-				    myMemoryWatch.UpdateMemory();
-			    }
 
 			    if (myMemWatch != null)
 			    {

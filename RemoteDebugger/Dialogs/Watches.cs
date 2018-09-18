@@ -248,12 +248,12 @@ namespace RemoteDebugger.Dialogs
 			VarWatchData vmd = HasLabel(l);
 			if (vmd != null)
 			{
-				vmd.localcount = 5;
+				vmd.localcount = 1;
 			}
 			else
 			{	 
 				vmd = new VarWatchData();
-				vmd.localcount = 5;
+				vmd.localcount = 1;
 				vmd = new VarWatchData();
 				vmd.label = l;
 				varWatchData.Add(vmd);

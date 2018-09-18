@@ -104,7 +104,45 @@ namespace RemoteDebugger.Main
 		}
 
 
-		
+		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Gets cloest valid code address. </summary>
+		///
+		/// <remarks> 18/09/2018. </remarks>
+		///
+		/// <param name="addr"> The address. </param>
+		/// <param name="bank"> The bank. </param>
+		///
+		/// <returns> The cloest valid code address. </returns>
+		/// -------------------------------------------------------------------------------------------------
+		private LineData _GetCloestValidCodeAddress(int addr,int bank)
+		{
+			LineData best = null;
+			int bestdiff = int.MaxValue;
+
+
+			if (lines.Count <= 0) return null;
+
+
+			for (int i=0;i<lines.Count-1;i++)
+			{
+				if (lines[i].bank == bank)
+				{
+					int diff = Math.Abs(lines[i].address - addr);
+					//found exact
+					if (diff == 0) return (lines[i]);
+
+					if (diff < bestdiff && diff < 4)
+					{
+						bestdiff = diff;
+						best = lines[i];
+
+					}
+				}
+			}
+
+
+			return best;
+		}
 		
 		
 		
@@ -325,6 +363,43 @@ namespace RemoteDebugger.Main
 
 
 		}
+
+
+
+		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Gets cloest valid code address. </summary>
+		///
+		/// <remarks> 18/09/2018. </remarks>
+		///
+		/// <param name="addr"> The address. </param>
+		/// <param name="bank"> The bank. </param>
+		///
+		/// <returns> The cloest valid code address. </returns>
+		/// -------------------------------------------------------------------------------------------------
+		public static int GetCloestValidCodeAddress(int address)
+		{
+
+			int bank = MainForm.banks[ GetBankIndex(address) ];
+
+			foreach (TraceFile t in traceFiles)
+			{
+
+				LineData l = t._GetCloestValidCodeAddress(address,bank);
+				if (l != null)
+					return l.address;
+
+
+			}
+
+			return -1;
+		}
+
+
+
+
+
+
+
 		public static void GotoLine(int pc)
 		{
 			if (traceFiles == null) return;
