@@ -14,6 +14,17 @@ namespace RemoteDebugger.Main
 {
 	public class SourceCodeView
 	{
+
+		public class CustomMenuItem : MenuItem
+		{
+			public object value;
+
+			public CustomMenuItem(string text, EventHandler onClick , object val) : base(text, onClick)
+			{
+				value = val;
+			}
+		}
+
 		private bool MarginClicked = false;
 		
 		public const int NUMBER_MARGIN = 1;
@@ -63,7 +74,6 @@ namespace RemoteDebugger.Main
 
 		}
 
-		private ContextMenu cm;
 
 		/// -------------------------------------------------------------------------------------------------
 		/// <summary> Initializes the source files. </summary>
@@ -204,16 +214,12 @@ namespace RemoteDebugger.Main
 
 						cf.codewindow.Click += Codewindow_Click;
 						cf.codewindow.DwellStart += Codewindow_Dwell;
+						cf.codewindow.DwellEnd += Codewindow_DwellEnd;
 						cf.codewindow.MouseDwellTime = 1000;
 
-						cf.codewindow.DwellEnd += Codewindow_DwellEnd;
-						//MenuItem miUndo;
-						cm = new ContextMenu();
-						{
-							MenuItem miUndo = new MenuItem("comming soon");//  ,   (s, ea) => this.UndoRedo.Undo());
-							cm.MenuItems.Add(miUndo);
-						}
-						cf.codewindow.ContextMenu=cm;
+						cf.codewindow.MouseDown += Codewindow_MouseDown;
+
+
 
 
 						//
@@ -290,8 +296,117 @@ namespace RemoteDebugger.Main
 
 		}
 
+		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Event handler. Called by Codewindow for mouse down events. </summary>
+		///
+		/// <remarks> 18/09/2018. </remarks>
+		///
+		/// <param name="sender"> Source of the event. </param>
+		/// <param name="e">	  Mouse event information. </param>
+		/// -------------------------------------------------------------------------------------------------
+		private void Codewindow_MouseDown(object sender, 
+			System.Windows.Forms.MouseEventArgs e)
+		{
+			Scintilla s = (Scintilla)sender;
+
+			if (e.Button == MouseButtons.Right)
+			{
+				ContextMenu cm = new ContextMenu();
+
+				int position = s.CharPositionFromPoint(e.X, e.Y);
 
 
+				int linenum = s.LineFromPosition(position);
+				var line = s.Lines[linenum];
+
+				TraceFile tf = TraceFile.FindTraceFile((string)s.Tag);
+				if (tf != null)
+				{
+					LineData ld = tf.GetLine(linenum);
+					string word = s.GetWordFromPosition(position);
+
+					//step mode and on valid line add a set pc option
+					if (tf.IsLineLegal(linenum) && Program.InStepMode)
+					{
+						cm.MenuItems.Add(new CustomMenuItem( "Set PC to $"+ld.address.ToString("X4"),new EventHandler(ContextSetPC),(object)ld.address ) );
+					}
+
+					if (!string.IsNullOrEmpty(word))
+					{
+						Labels.Label l = Labels.FindLabel(word);
+						if (l != null)
+						{
+							if (!l.function)
+							{
+								cm.MenuItems.Add(new CustomMenuItem( "Add Variable "+l.label+" to Watch",new EventHandler(ContextAddToWatch),(object)l ) );
+							}
+						}
+
+					}
+
+
+					cm.MenuItems.Add("item2");
+					//ContextMenu cm = new ContextMenu();
+					//{
+					//	MenuItem mi = new MenuItem("coming soon2 "+word);//  ,   (s, ea) => this.UndoRedo.Undo());
+					//	cm.MenuItems.Add(mi);
+					//}
+					tf.codefile.codewindow.ContextMenu = cm;
+
+				}
+
+
+			}
+
+			Console.WriteLine("hello");
+		}
+
+		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Context add to watch. </summary>
+		///
+		/// <remarks> 19/09/2018. </remarks>
+		///
+		/// <param name="sender"> Source of the event. </param>
+		/// <param name="e">	  Event information. </param>
+		/// -------------------------------------------------------------------------------------------------
+		private void ContextAddToWatch(object sender, EventArgs e)
+		{
+			CustomMenuItem customMenuItem = sender as CustomMenuItem;
+
+			Labels.Label l = (Labels.Label) customMenuItem.value;
+
+			if (l != null)
+			{
+				MainForm.myWatches.AddWatchLabel(l);
+
+			}
+
+			//CustomMenuItem customMenuItem = sender as CustomMenuItem;
+			//int pc = (int) customMenuItem.value;
+
+			//Console.WriteLine("hello "+pc.ToString("X4"));
+
+		}
+		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Context set PC. </summary>
+		///
+		/// <remarks> 19/09/2018. </remarks>
+		///
+		/// <param name="sender"> Source of the event. </param>
+		/// <param name="e">	  Event information. </param>
+		/// -------------------------------------------------------------------------------------------------
+		private void ContextSetPC(object sender, EventArgs e)
+		{
+			CustomMenuItem customMenuItem = sender as CustomMenuItem;
+			int pc = (int) customMenuItem.value;
+
+
+			MainForm.myNewRegisters.SetRegister(pc,Registers.Z80Register.pc);
+
+
+			Console.WriteLine("hello "+pc.ToString("X4"));
+
+		}
 		/// -------------------------------------------------------------------------------------------------
 		/// <summary> Event handler. Called by Codewindow for dwell end events. </summary>
 		///
@@ -435,39 +550,17 @@ namespace RemoteDebugger.Main
 				return;
 			}
 
-			Console.WriteLine("Codewindow_Click");
 
-/*			Scintilla s = (Scintilla)sender;
-
-			Console.WriteLine(s.CurrentLine);
-
-			CodeFile cf = GetCodeFileFromSection((string)s.Tag);
-
-			Section sec = FindSection((string)s.Tag);
-
-			// Do we have a marker for this line?
-			int linenum = s.CurrentLine;
-
-			if (sec.IsLineLegal(linenum))
-			{
-				Console.WriteLine("Line Ok");
-				LineData ld = sec.GetLine(linenum);
-
-				Form1.commsthread.AddCommand(Command.disassmblememory, 50, " " + ld.Addess.ToString("X4") + "H 256");
-
-
-				//now request memory and display is asm window
-
-			}
-
-
-			//	e.
-
-			//throw new NotImplementedException();
-			*/
 		}
 
-
+		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Event handler. Called by TextArea for margin click events. </summary>
+		///
+		/// <remarks> 19/09/2018. </remarks>
+		///
+		/// <param name="sender"> Source of the event. </param>
+		/// <param name="e">	  Margin click event information. </param>
+		/// -------------------------------------------------------------------------------------------------
 		private void TextArea_MarginClick(object sender, MarginClickEventArgs e)
 		{
 			if (!Program.InStepMode) return;

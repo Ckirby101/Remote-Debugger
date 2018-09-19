@@ -172,13 +172,13 @@ namespace RemoteDebugger.Dialogs
 				int val8 = (value & 0xff);
 				int val16 = (value & 0xffff);
 				
-				varWatchData[tag].display = "M: "+response[0]+"  8: $"+val8.ToString("X2")+" / "+val8+"   16: $"+val16.ToString("X4")+" / "+val16;
+				varWatchData[tag].display = "M: "+response[0]+"   8: $"+val8.ToString("X2")+" / "+val8+"    16: $"+val16.ToString("X4")+" / "+val16;
 				watchesGrid.InvalidateRow(tag);
 
 				if (varWatchData[tag].lastval != val16)
-					watchesGrid.Rows[tag].DefaultCellStyle.ForeColor = Color.Red;
+					watchesGrid.Rows[tag].DefaultCellStyle.BackColor = Color.LightBlue;
 				else
-					watchesGrid.Rows[tag].DefaultCellStyle.ForeColor = Color.Black;
+					watchesGrid.Rows[tag].DefaultCellStyle.BackColor = Color.White;
 
 
 				varWatchData[tag].lastval = val16;
@@ -205,6 +205,23 @@ namespace RemoteDebugger.Dialogs
 			Labels.Label l = Labels.FindLabel(s);
 			if (l != null)
 			{
+				AddWatchLabel(l);
+			}
+
+		}
+
+		/// -------------------------------------------------------------------------------------------------
+		/// <summary> Adds a watch label. </summary>
+		///
+		/// <remarks> 19/09/2018. </remarks>
+		///
+		/// <param name="l"> The l control. </param>
+		/// -------------------------------------------------------------------------------------------------
+		public void AddWatchLabel(Labels.Label l)
+		{
+			if (HasLabel(l) == null)
+			{
+
 				VarWatchData vwd = new VarWatchData();
 				vwd.label = l;
 				varWatchData.Insert(0,vwd);
@@ -212,6 +229,7 @@ namespace RemoteDebugger.Dialogs
 
 				Update();
 			}
+
 
 		}
 

@@ -482,6 +482,15 @@ namespace RemoteDebugger
 
 	    }
 
+	    public void SetRegister(int value, Z80Register reg)
+	    {
+		    registerData[(int) reg].Value = value;
+		    Program.telnetConnection.SendCommand("set-register "+registerData[(int) reg].RegisterName+"="+value, RegChangeCallback);
+
+	    }
+
+
+
 		private void RegA_KeyDown(object sender, KeyEventArgs e)
 		{
 			UpdateRegister(e, RegA.Text,Z80Register.a,"a=");
