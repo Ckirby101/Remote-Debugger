@@ -460,7 +460,7 @@ namespace RemoteDebugger
 	    }
 
 
-	    private void UpdateRegister(KeyEventArgs e, string s, Z80Register reg, string assign)
+	    private void UpdateRegister(KeyEventArgs e, string s, Z80Register reg)
 	    {
 		    if (e.KeyCode == Keys.Enter)
 		    {
@@ -470,8 +470,9 @@ namespace RemoteDebugger
 			    {
 				    registerData[(int) reg].Value = addr;
 
+				    SetRegister(addr, reg);
 
-				    Program.telnetConnection.SendCommand("set-register "+assign+""+addr, RegChangeCallback);
+				    //Program.telnetConnection.SendCommand("set-register "+assign+""+addr, RegChangeCallback);
 
 				    UIUpdate();
 			    }
@@ -493,73 +494,73 @@ namespace RemoteDebugger
 
 		private void RegA_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegA.Text,Z80Register.a,"a=");
+			UpdateRegister(e, RegA.Text, Z80Register.a);
 		}
 
 
 		private void RegExA_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegExA.Text,Z80Register.a_e,"a'=");
+			UpdateRegister(e, RegExA.Text,Z80Register.a_e);
 
 		}
 
 		private void RegHL_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegHL.Text,Z80Register.hl,"hl=");
+			UpdateRegister(e, RegHL.Text,Z80Register.hl);
 
 		}
 
 		private void RegDE_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegDE.Text,Z80Register.de,"de=");
+			UpdateRegister(e, RegDE.Text,Z80Register.de);
 
 		}
 
 		private void RegBC_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegBC.Text,Z80Register.bc,"bc=");
+			UpdateRegister(e, RegBC.Text,Z80Register.bc);
 
 		}
 
 		private void RegPC_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegPC.Text,Z80Register.pc,"pc=");
+			UpdateRegister(e, RegPC.Text,Z80Register.pc);
 
 		}
 
 		private void RegExHL_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegExHL.Text,Z80Register.hl_e,"hl'=");
+			UpdateRegister(e, RegExHL.Text,Z80Register.hl_e);
 
 		}
 
 		private void RegExDE_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegExDE.Text,Z80Register.de_e,"de'=");
+			UpdateRegister(e, RegExDE.Text,Z80Register.de_e);
 
 		}
 
 		private void RegExBC_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegExBC.Text,Z80Register.bc_e,"bc'=");
+			UpdateRegister(e, RegExBC.Text,Z80Register.bc_e);
 
 		}
 
 		private void RegIX_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegIX.Text,Z80Register.ix,"ix=");
+			UpdateRegister(e, RegIX.Text,Z80Register.ix);
 
 		}
 
 		private void RegIY_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegIY.Text,Z80Register.iy,"iy=");
+			UpdateRegister(e, RegIY.Text,Z80Register.iy);
 
 		}
 
 		private void RegSP_KeyDown(object sender, KeyEventArgs e)
 		{
-			UpdateRegister(e, RegSP.Text,Z80Register.sp,"sp=");
+			UpdateRegister(e, RegSP.Text,Z80Register.sp);
 
 		}
 	}
